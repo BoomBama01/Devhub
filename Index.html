@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket DevHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0f0f1f;
+            --card: rgba(30, 30, 60, 0.45);
+            --border: rgba(0, 255, 255, 0.3);
+            --text: #e0f0ff;
+            --accent: #00ffff;
+            --accent2: #ff00aa;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .header {
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 30px 0;
+        }
+        .header h1 {
+            font-size: clamp(2.8rem, 7vw, 6rem);
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 4s ease-in-out infinite alternate;
+        }
+        @keyframes glow { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(60deg); } }
+
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 26px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+        .card:hover { transform: translateY(-6px); }
+        .card h2 {
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-size: 1.35rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input, textarea, select, button {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.08);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); }
+        button {
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,255,255,0.4); }
+
+        #timer { font-size: 2.8rem; font-weight: bold; text-align: center; margin: 15px 0; }
+        .progress-ring { width: 130px; height: 130px; margin: 0 auto; display: block; }
+        .progress-ring circle { transform: rotate(-90deg); transform-origin: 50% 50%; }
+        ul { list-style: none; max-height: 240px; overflow-y: auto; }
+        li {
+            padding: 14px;
+            background: rgba(255,255,255,0.06);
+            margin: 10px 0;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+            transition: 0.2s;
+        }
+        li:hover { background: rgba(0,255,255,0.18); }
+        li.completed span { text-decoration: line-through; opacity: 0.6; }
+        .remove { color: #ff6b6b; cursor: pointer; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Pocket DevHub</h1>
+        <p>Your minimalist developer dashboard</p>
+    </div>
+
+    <!-- Clock -->
+    <div class="card">
+        <h2>Time</h2>
+        <div style="font-size:3.2rem; font-weight:bold" id="time">--:--</div>
+        <div id="date" style="opacity:0.85; font-size:1.1rem"></div>
+    </div>
+
+    <!-- Weather -->
+    <div class="card">
+        <h2>Weather</h2>
+        <input type="text" id="city" placeholder="Enter city" value="London">
+        <button onclick="getWeather()">Get Weather</button>
+        <div id="weather" style="margin-top:12px; font-size:1.15rem">Click to load</div>
+    </div>
+
+    <!-- Pomodoro -->
+    <div class="card">
+        <h2>Pomodoro</h2>
+        <svg class="progress-ring">
+            <circle cx="65" cy="65" r="58" stroke="#222" stroke-width="11" fill="none"/>
+            <circle cx="65" cy="65" r="58" stroke="#00ffff" stroke-width="11" fill="none"
+                    stroke-dasharray="364" stroke-dashoffset="364" id="progress"/>
+        </svg>
+        <div id="timer">25:00</div>
+        <button onclick="startTimer()">Start</button>
+        <button onclick="resetTimer()">Reset</button>
+    </div>
+
+    <!-- Todos -->
+    <div class="card">
+        <h2>Todos</h2>
+        <input type="text" id="todoInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter') addTodo()">
+        <button onclick="addTodo()">Add Task</button>
+        <ul id="todoList"></ul>
+    </div>
+
+    <!-- Code Snippets -->
+    <div class="card">
+        <h2>Code Snippets</h2>
+        <textarea id="snippet" rows="6" placeholder="Paste reusable code here..."></textarea>
+        <button onclick="saveSnippet()">Save</button>
+    </div>
+
+    <!-- Quick Search -->
+    <div class="card">
+        <h2>Quick Search</h2>
+        <select id="engine">
+            <option value="https://google.com/search?q=">Google</option>
+            <option value="https://youtube.com/results?search_query=">YouTube</option>
+            <option value="https://github.com/search?q=">GitHub</option>
+            <option value="https://stackoverflow.com/search?q=">Stack Overflow</option>
+        </select>
+        <input type="text" id="query" placeholder="Search anything..." onkeydown="if(event.key==='Enter') quickSearch()">
+        <button onclick="quickSearch()">Search</button>
+    </div>
+
+<script>
+    // Clock
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('time').textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('date').textContent = now.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Weather (Open-Meteo — always works)
+    async function getWeather() {
+        const city = document.getElementById('city').value.trim() || 'London';
+        document.getElementById('weather').innerHTML = 'Loading...';
+        try {
+            const g = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`);
+            const gd = await g.json();
+            if (!gd.results) throw '';
+            const {latitude, longitude} = gd.results[0];
+            const w = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+            const wd = await w.json();
+            const c = wd.current_weather;
+            document.getElementById('weather').innerHTML = `<strong>${city}</strong><br>${Math.round(c.temperature)}°C • Wind ${c.windspeed} km/h`;
+        } catch { document.getElementById('weather').innerHTML = 'City not found'; }
+    }
+    getWeather();
+
+    // Pomodoro
+    let timer, seconds = 1500;
+    function startTimer() {
+        if(timer) return;
+        timer = setInterval(()=>{
+            seconds--;
+            const m = String(Math.floor(seconds/60)).padStart(2,'0');
+            const s = String(seconds%60).padStart(2,'0');
+            document.getElementById('timer').textContent = `${m}:${s}`;
+            document.getElementById('progress').style.strokeDashoffset = 364 - (364 * (1500-seconds)/1500);
+            if(seconds <= 0){ clearInterval(timer); timer=null; alert('Pomodoro complete!'); resetTimer(); }
+        },1000);
+    }
+    function resetTimer() {
+        clearInterval(timer); timer=null;
+        seconds=1500;
+        document.getElementById('timer').textContent='25:00';
+        document.getElementById('progress').style.strokeDashoffset=364;
+    }
+
+    // Todos
+    function addTodo() {
+        const val = document.getElementById('todoInput').value.trim();
+        if(!val) return;
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${val}</span> <i class="fas fa-trash remove" onclick="this.parentElement.remove();saveTodos()"></i>`;
+        li.onclick = e => { if(e.target.tagName!=='I') li.classList.toggle('completed'); saveTodos(); };
+        document.getElementById('todoList').appendChild(li);
+        document.getElementById('todoInput').value='';
+        saveTodos();
+    }
+    function saveTodos() { localStorage.setItem('todos', document.getElementById('todoList').innerHTML); }
+    document.getElementById('todoList').innerHTML = localStorage.getItem('todos') || '';
+
+    // Snippets
+    document.getElementById('snippet').value = localStorage.getItem('snippet') || '';
+    function saveSnippet() {
+        localStorage.setItem('snippet', document.getElementById('snippet').value);
+        alert('Saved!');
+    }
+
+    // Quick Search
+    function quickSearch() {
+        const q = document.getElementById('query').value.trim();
+        if(q) window.open(document.getElementById('engine').value + encodeURIComponent(q), '_blank');
+    }
+</script>
+</body>
+</html>
